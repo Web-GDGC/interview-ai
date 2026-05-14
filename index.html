@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InterviewAI — Practice with AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0b1a;
+    --bg2: rgba(255,255,255,0.04);
+    --bg3: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.16);
+    --text: #f0eeff;
+    --text2: rgba(240,238,255,0.6);
+    --text3: rgba(240,238,255,0.35);
+    --accent: #9d7eff;
+    --accent2: #60a5fa;
+    --accent-grad: linear-gradient(135deg, #9d7eff, #60a5fa);
+    --danger: #f87171;
+    --success: #34d399;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+
+  #app {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; width: 100%; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* ── BACKGROUND ORBS ── */
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(80px);
+    pointer-events: none; z-index: 0;
+  }
+  .orb1 { width: 400px; height: 400px; background: rgba(157,126,255,0.15); top: -100px; left: -100px; }
+  .orb2 { width: 300px; height: 300px; background: rgba(96,165,250,0.1); bottom: -80px; right: -80px; }
+  .orb3 { width: 200px; height: 200px; background: rgba(157,126,255,0.08); bottom: 30%; left: 20%; }
+
+  /* ── SETUP SCREEN ── */
+  #setup {
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .setup-card {
+    position: relative; z-index: 1;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2.75rem 2.5rem;
+    width: 100%; max-width: 500px;
+    backdrop-filter: blur(24px);
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--accent-grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin: 0 auto 1.2rem;
+    box-shadow: 0 0 40px rgba(157,126,255,0.3);
+  }
+  .setup-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px; font-weight: 700;
+    text-align: center; color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .setup-sub {
+    text-align: center; color: var(--text2);
+    font-size: 13.5px; margin-top: 6px; margin-bottom: 2rem;
+  }
+
+  .field { margin-bottom: 1.25rem; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--text2); margin-bottom: 8px;
+  }
+  .field select {
+    width: 100%; padding: 0.75rem 1rem;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 10px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; cursor: pointer; appearance: none;
+    transition: border-color 0.15s;
+  }
+  .field select:focus { border-color: var(--accent); }
+  .field select option { background: #1a1630; }
+
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 0.45rem 0.9rem; border-radius: 8px;
+    font-size: 12.5px; cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg2); color: var(--text2);
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active {
+    border-color: var(--accent); background: rgba(157,126,255,0.15);
+    color: #c4b5fd; font-weight: 500;
+  }
+
+  .range-wrap { position: relative; }
+  .range-wrap input[type=range] {
+    width: 100%; accent-color: var(--accent);
+    height: 4px; cursor: pointer;
+  }
+  .range-labels {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text3); margin-top: 5px;
+  }
+  .range-val {
+    font-size: 13px; font-weight: 600; color: var(--accent);
+  }
+  .range-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .btn-primary {
+    width: 100%; padding: 0.9rem;
+    background: var(--accent-grad);
+    border: none; border-radius: 12px;
+    color: #fff; font-size: 15px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; letter-spacing: 0.01em;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .powered {
+    text-align: center; font-size: 11px;
+    color: var(--text3); margin-top: 1rem;
+  }
+
+  /* ── INTERVIEW SCREEN ── */
+  #interview {
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .iview-header {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .iview-logo { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; }
+  .iview-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .progress-wrap { text-align: right; }
+  .progress-label { font-size: 11px; color: var(--text3); }
+  .progress-val { font-size: 13px; font-weight: 600; color: var(--accent); }
+  .progress-bar-bg {
+    width: 130px; height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px; margin-top: 5px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 99px;
+    background: var(--accent-grad);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .chat-area {
+    flex: 1; overflow-y: auto;
+    padding: 1.5rem; display: flex;
+    flex-direction: column; gap: 1rem;
+    position: relative; z-index: 1;
+  }
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-thumb { background: rgba(157,126,255,0.25); border-radius: 99px; }
+
+  .msg { display: flex; align-items: flex-end; gap: 10px; }
+  .msg.user { justify-content: flex-end; }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .avatar.ai { background: var(--accent-grad); box-shadow: 0 0 16px rgba(157,126,255,0.3); }
+  .avatar.user { background: rgba(255,255,255,0.1); }
+
+  .bubble {
+    max-width: 75%; padding: 0.75rem 1rem;
+    font-size: 14px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .bubble.ai {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 18px 18px 18px 4px;
+    color: var(--text);
+  }
+  .bubble.user {
+    background: var(--accent-grad);
+    border-radius: 18px 18px 4px 18px;
+    color: #fff;
+  }
+
+  .typing { display: flex; gap: 5px; align-items: center; padding: 0.75rem 1rem; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.65); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  .input-area {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+    position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  textarea#answer {
+    flex: 1; padding: 0.75rem 1rem;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    resize: none; outline: none; line-height: 1.5;
+    transition: border-color 0.15s;
+    min-height: 50px; max-height: 120px;
+  }
+  textarea#answer:focus { border-color: var(--accent); }
+  textarea#answer::placeholder { color: var(--text3); }
+  .send-btn {
+    width: 44px; height: 44px;
+    border: none; border-radius: 10px;
+    font-size: 18px; cursor: pointer;
+    transition: all 0.15s; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .send-btn.ready { background: var(--accent-grad); color: #fff; }
+  .send-btn.idle { background: rgba(255,255,255,0.08); color: var(--text3); cursor: not-allowed; }
+  .input-hint { font-size: 11px; color: var(--text3); text-align: center; margin-top: 6px; }
+
+  /* ── COMPLETE SCREEN ── */
+  #complete {
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+  .result-card {
+    position: relative; z-index: 1;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid var(--border);
+    border-radius: 24px; padding: 2.5rem;
+    width: 100%; max-width: 600px;
+    backdrop-filter: blur(24px);
+    animation: fadeUp 0.4s ease both;
+  }
+  .result-header { text-align: center; margin-bottom: 1.75rem; }
+  .result-emoji { font-size: 52px; display: block; margin-bottom: 12px; }
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; font-weight: 700;
+  }
+  .result-sub { color: var(--text2); font-size: 13px; margin-top: 5px; }
+  .score-badge {
+    display: inline-flex; align-items: baseline; gap: 4px;
+    border-radius: 50px; padding: 0.45rem 1.4rem; margin-top: 14px;
+  }
+  .score-num { font-size: 30px; font-weight: 700; }
+  .score-denom { font-size: 16px; color: var(--text2); }
+
+  .summary-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    max-height: 320px; overflow-y: auto;
+    font-size: 14px; line-height: 1.7; color: var(--text2);
+  }
+  .summary-box::-webkit-scrollbar { width: 3px; }
+  .summary-box::-webkit-scrollbar-thumb { background: rgba(157,126,255,0.2); border-radius: 99px; }
+  .summary-box p { margin-bottom: 6px; }
+  .summary-box .heading { color: #c4b5fd; font-weight: 600; font-size: 14px; }
+
+  .result-actions { display: flex; gap: 12px; }
+  .btn-secondary {
+    flex: 1; padding: 0.8rem;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 10px; color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+  .btn-small-primary {
+    flex: 1; padding: 0.8rem;
+    background: var(--accent-grad);
+    border: none; border-radius: 10px;
+    color: #fff; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-small-primary:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<!-- Background Orbs -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div id="app">
+
+  <!-- ── SETUP SCREEN ── -->
+  <div id="setup" class="screen active">
+    <div class="setup-card">
+      <div class="logo-circle">🎯</div>
+      <h1 class="setup-title">InterviewAI</h1>
+      <p class="setup-sub">Practice interviews with AI. Get real, honest feedback.</p>
+
+      <div class="field">
+        <label>Job Role</label>
+        <select id="roleSelect">
+          <option>Software Engineer</option>
+          <option>Product Manager</option>
+          <option>Data Scientist</option>
+          <option>UX Designer</option>
+          <option>Marketing Manager</option>
+          <option>Sales Executive</option>
+          <option>DevOps Engineer</option>
+          <option>Business Analyst</option>
+          <option>Frontend Developer</option>
+          <option>Backend Developer</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Experience Level</label>
+        <div class="chip-group" id="levelChips">
+          <button class="chip" data-val="Intern">Intern</button>
+          <button class="chip" data-val="Junior">Junior</button>
+          <button class="chip active" data-val="Mid-level">Mid-level</button>
+          <button class="chip" data-val="Senior">Senior</button>
+          <button class="chip" data-val="Lead / Manager">Lead</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="range-header">
+          <label style="margin:0">Number of Questions</label>
+          <span class="range-val" id="qCountVal">5</span>
+        </div>
+        <input type="range" id="qCount" min="3" max="10" value="5" step="1"/>
+        <div class="range-labels"><span>3 (Quick)</span><span>10 (Full)</span></div>
+      </div>
+
+      <button class="btn-primary" id="startBtn">Start Interview →</button>
+      <p class="powered">Powered by Claude AI · Anthropic</p>
+    </div>
+  </div>
+
+  <!-- ── INTERVIEW SCREEN ── -->
+  <div id="interview" class="screen">
+    <div class="iview-header">
+      <div>
+        <div class="iview-logo">🎯 InterviewAI</div>
+        <div class="iview-meta" id="iviewMeta">Mid-level Software Engineer</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label">Progress</div>
+        <div class="progress-val" id="progressVal">Q1 of 5</div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-area" id="chatArea"></div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="answer" placeholder="Type your answer here…" rows="2"></textarea>
+        <button class="send-btn idle" id="sendBtn">➤</button>
+      </div>
+      <p class="input-hint">Enter to send · Shift+Enter for new line</p>
+    </div>
+  </div>
+
+  <!-- ── COMPLETE SCREEN ── -->
+  <div id="complete" class="screen">
+    <div class="result-card">
+      <div class="result-header">
+        <span class="result-emoji" id="resultEmoji">🏆</span>
+        <h2 class="result-title">Interview Complete!</h2>
+        <p class="result-sub" id="resultSub">Mid-level Software Engineer · 5 Questions</p>
+        <div class="score-badge" id="scoreBadge" style="display:none">
+          <span class="score-num" id="scoreNum">8</span>
+          <span class="score-denom">/10</span>
+        </div>
+      </div>
+
+      <div class="summary-box" id="summaryBox"></div>
+
+      <div class="result-actions">
+        <button class="btn-secondary" id="newBtn">New Interview</button>
+        <button class="btn-small-primary" id="retryBtn">Try Again →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_URL = "https://api.anthropic.com/v1/messages";
+
+let state = {
+  role: "Software Engineer",
+  level: "Mid-level",
+  questionCount: 5,
+  messages: [],
+  questionNum: 0,
+  loading: false,
+};
+
+// ── ELEMENT REFS ──
+const setupEl    = document.getElementById("setup");
+const interviewEl= document.getElementById("interview");
+const completeEl = document.getElementById("complete");
+const chatArea   = document.getElementById("chatArea");
+const answerEl   = document.getElementById("answer");
+const sendBtn    = document.getElementById("sendBtn");
+const progressFill = document.getElementById("progressFill");
+const progressVal  = document.getElementById("progressVal");
+const iviewMeta    = document.getElementById("iviewMeta");
+
+// ── SETUP INTERACTIONS ──
+document.getElementById("qCount").addEventListener("input", e => {
+  state.questionCount = +e.target.value;
+  document.getElementById("qCountVal").textContent = e.target.value;
+});
+
+document.getElementById("roleSelect").addEventListener("change", e => {
+  state.role = e.target.value;
+});
+
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    state.level = chip.dataset.val;
+  });
+});
+
+document.getElementById("startBtn").addEventListener("click", startInterview);
+
+// ── ANSWER INPUT ──
+answerEl.addEventListener("input", () => {
+  const ready = answerEl.value.trim().length > 0 && !state.loading;
+  sendBtn.className = "send-btn " + (ready ? "ready" : "idle");
+  // auto-resize
+  answerEl.style.height = "auto";
+  answerEl.style.height = Math.min(answerEl.scrollHeight, 120) + "px";
+});
+
+answerEl.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    if (!state.loading && answerEl.value.trim()) sendMessage();
+  }
+});
+
+sendBtn.addEventListener("click", () => {
+  if (!state.loading && answerEl.value.trim()) sendMessage();
+});
+
+document.getElementById("newBtn").addEventListener("click",  () => showScreen("setup"));
+document.getElementById("retryBtn").addEventListener("click", () => startInterview());
+
+// ── HELPERS ──
+function showScreen(name) {
+  [setupEl, interviewEl, completeEl].forEach(el => el.classList.remove("active"));
+  document.getElementById(name).classList.add("active");
+}
+
+function systemPrompt() {
+  return `You are an expert interviewer conducting a professional job interview for a ${state.level} ${state.role} position.
+
+Your job:
+1. Ask ONE interview question at a time — behavioral, technical, or situational, appropriate for the role and level.
+2. After the candidate responds, give brief, constructive feedback (2-3 sentences) on their answer.
+3. Then immediately ask the NEXT question.
+4. After exactly ${state.questionCount} questions and answers, output the token INTERVIEW_COMPLETE on its own line, then write a comprehensive performance summary with:
+   - Overall score out of 10 (format: X/10)
+   - Key Strengths (bullet points starting with -)
+   - Areas for Improvement (bullet points starting with -)
+   - Hiring Recommendation
+
+Rules:
+- Keep questions concise and clear
+- Be professional but warm
+- Vary question types across technical, behavioral, situational
+- Start by welcoming the candidate and asking your first question directly
+- Never break character`;
+}
+
+function appendMessage(role, text) {
+  const isAI = role === "assistant";
+  const div = document.createElement("div");
+  div.className = "msg " + (isAI ? "ai" : "user");
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar " + (isAI ? "ai" : "user");
+  avatar.textContent = isAI ? "🤖" : "👤";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble " + (isAI ? "ai" : "user");
+  bubble.textContent = text;
+
+  if (isAI) {
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+  } else {
+    div.appendChild(bubble);
+    div.appendChild(avatar);
+  }
+  chatArea.appendChild(div);
+  scrollChat();
+  return div;
+}
+
+let typingEl = null;
+function showTyping() {
+  if (typingEl) return;
+  const div = document.createElement("div");
+  div.className = "msg ai";
+  const avatar = document.createElement("div");
+  avatar.className = "avatar ai"; avatar.textContent = "🤖";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble ai typing";
+  bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  div.appendChild(avatar); div.appendChild(bubble);
+  chatArea.appendChild(div);
+  typingEl = div;
+  scrollChat();
+}
+function hideTyping() {
+  if (typingEl) { typingEl.remove(); typingEl = null; }
+}
+
+function scrollChat() {
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function updateProgress() {
+  const pct = Math.min((state.questionNum / state.questionCount) * 100, 100);
+  progressFill.style.width = pct + "%";
+  progressVal.textContent = `Q${Math.min(state.questionNum, state.questionCount)} of ${state.questionCount}`;
+}
+
+function setLoading(val) {
+  state.loading = val;
+  answerEl.disabled = val;
+  const hasText = answerEl.value.trim().length > 0;
+  sendBtn.className = "send-btn " + (!val && hasText ? "ready" : "idle");
+  if (val) showTyping(); else hideTyping();
+}
+
+// ── API CALL ──
+async function callClaude(apiMessages) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: systemPrompt(),
+      messages: apiMessages,
+    }),
+  });
+  const data = await res.json();
+  return data.content?.find(b => b.type === "text")?.text || "";
+}
+
+// ── START INTERVIEW ──
+async function startInterview() {
+  state.messages = [];
+  state.questionNum = 0;
+  chatArea.innerHTML = "";
+  answerEl.value = "";
+  answerEl.style.height = "auto";
+  iviewMeta.textContent = `${state.level} ${state.role}`;
+  updateProgress();
+  showScreen("interview");
+  setLoading(true);
+
+  try {
+    const firstMsg = [{ role: "user", content: "Please begin the interview." }];
+    const text = await callClaude(firstMsg);
+    state.messages.push({ role: "assistant", content: text });
+    appendMessage("assistant", text);
+    state.questionNum = 1;
+    updateProgress();
+  } catch(e) {
+    appendMessage("assistant", "⚠️ Could not connect to AI. Please check your API key and try again.");
+  }
+
+  setLoading(false);
+  setTimeout(() => answerEl.focus(), 100);
+}
+
+// ── SEND MESSAGE ──
+async function sendMessage() {
+  const userText = answerEl.value.trim();
+  if (!userText || state.loading) return;
+
+  answerEl.value = "";
+  answerEl.style.height = "auto";
+  state.messages.push({ role: "user", content: userText });
+  appendMessage("user", userText);
+  setLoading(true);
+
+  try {
+    // Build full history for API
+    const apiMsgs = [
+      { role: "user", content: "Please begin the interview." },
+      ...state.messages
+    ];
+
+    const text = await callClaude(apiMsgs);
+
+    if (text.includes("INTERVIEW_COMPLETE")) {
+      const before = text.split("INTERVIEW_COMPLETE")[0].trim();
+      const summary = text.split("INTERVIEW_COMPLETE").slice(1).join("").trim();
+      if (before) {
+        state.messages.push({ role: "assistant", content: before });
+        appendMessage("assistant", before);
+      }
+      setLoading(false);
+      setTimeout(() => showResults(summary), 600);
+    } else {
+      state.messages.push({ role: "assistant", content: text });
+      appendMessage("assistant", text);
+      state.questionNum = Math.min(state.questionNum + 1, state.questionCount);
+      updateProgress();
+      setLoading(false);
+      answerEl.focus();
+    }
+  } catch(e) {
+    appendMessage("assistant", "⚠️ Connection error. Please try again.");
+    setLoading(false);
+  }
+}
+
+// ── SHOW RESULTS ──
+function showResults(summary) {
+  const scoreMatch = summary.match(/(\d+)\s*\/\s*10/);
+  const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+
+  document.getElementById("resultSub").textContent =
+    `${state.level} ${state.role} · ${state.questionCount} Questions`;
+
+  const emoji = score !== null ? (score >= 8 ? "🏆" : score >= 6 ? "👍" : "📈") : "✅";
+  document.getElementById("resultEmoji").textContent = emoji;
+
+  if (score !== null) {
+    const badge = document.getElementById("scoreBadge");
+    badge.style.display = "inline-flex";
+    badge.style.background = score >= 8
+      ? "rgba(96,165,250,0.15)" : score >= 6
+      ? "rgba(157,126,255,0.15)" : "rgba(248,113,113,0.15)";
+    badge.style.border = `1px solid ${score >= 8
+      ? "rgba(96,165,250,0.35)" : score >= 6
+      ? "rgba(157,126,255,0.35)" : "rgba(248,113,113,0.35)"}`;
+    document.getElementById("scoreNum").textContent = score;
+    document.getElementById("scoreNum").style.color = score >= 8 ? "#60a5fa" : score >= 6 ? "#9d7eff" : "#f87171";
+  }
+
+  const box = document.getElementById("summaryBox");
+  box.innerHTML = "";
+  summary.split("\n").forEach(line => {
+    if (!line.trim()) { box.appendChild(document.createElement("br")); return; }
+    const p = document.createElement("p");
+    const cleaned = line.replace(/^#+\s*/, "").trim();
+    const isHeading = line.match(/^#+\s/) || (cleaned.endsWith(":") && cleaned.length < 60);
+    const isBullet = cleaned.startsWith("-") || cleaned.startsWith("•");
+    p.textContent = cleaned;
+    p.style.marginBottom = "5px";
+    p.style.paddingLeft = isBullet ? "8px" : "0";
+    p.style.color = isHeading ? "#c4b5fd" : isBullet ? "rgba(240,238,255,0.8)" : "rgba(240,238,255,0.6)";
+    p.style.fontWeight = isHeading ? "600" : "400";
+    p.style.fontSize = "13.5px";
+    box.appendChild(p);
+  });
+
+  showScreen("complete");
+}
+</script>
+</body>
+</html>
